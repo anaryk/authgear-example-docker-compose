@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres-pg-partman:latest
+    build:
+      context: ./postgres
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+    - "5432:5432"
+
+  redis:
+    image: redis:6.2.21
+    volumes:
+    - redis_data:/data
+    ports:
+    - "6379:6379"
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command:
+    - "minio"
+    - "server"
+    - "/data"
+    - "--console-address"
+    - ":9001"
+    volumes:
+    - minio_data:/data
+    ports:
+    - "9000:9000"
+    - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "minio"
+      MINIO_ROOT_PASSWORD: "secretpassword"
+
+  nginx:
+    image: nginx:stable
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+    - "8010:8010"
+    - "3100:3100"
+
+  authgear:
+    image: quay.io/theauthgear/authgear-server:2025-11-26.0
+    volumes:
+    - ./var:/app
+    env_file:
+    - ./env
+    ports:
+    - "3000:3000"
+    - "3001:3001"
+    - "3002:3002"
+
+  authgear-images:
+    image: quay.io/theauthgear/authgear-server:2025-11-26.0
+    volumes:
+    - ./var:/app
+    env_file:
+    - ./env
+    ports:
+    - "3004:3004"
+
+  authgear-portal:
+    # FIXME: Require https://github.com/authgear/authgear-server/pull/5450
+    # image: quay.io/theauthgear/authgear-portal:2025-11-26.0
+    # The following was built locally on my machine so it never work on your machine.
+    image: authgear-portal:latest
+    volumes:
+    - ./var:/app
+    env_file:
+    - ./env
+    ports:
+    - "3003:3003"
+
+  authgear-deno:
+    image: quay.io/theauthgear/authgear-deno:git-27a7ae9a2b70
+    ports:
+    - "8090:8090"
+
+volumes:
+  redis_data:
+    driver: local
+  db_data:
+    driver: local
+  minio_data:
+    driver: local

@@ -64,10 +64,7 @@ services:
     - "3004:3004"
 
   authgear-portal:
-    # FIXME: Require https://github.com/authgear/authgear-server/pull/5450
-    # image: quay.io/theauthgear/authgear-portal:2025-11-26.0
-    # The following was built locally on my machine so it never work on your machine.
-    image: authgear-portal:latest
+    image: quay.io/theauthgear/authgear-portal:2025-11-26.0
     volumes:
     - ./var:/app
     env_file:

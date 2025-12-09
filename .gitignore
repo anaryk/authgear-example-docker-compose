@@ -1,0 +1,69 @@
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.secrets.yaml
+secrets/
+
+# Backups
+backups/
+*.tar.gz
+*.sql
+*.sql.gz
+*.dump
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Node modules (if any)
+node_modules/
+
+# Python (if any)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Keep these files
+!.env.example
+!.gitkeep

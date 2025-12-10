@@ -287,44 +287,12 @@ secrets:
   data:
     database_schema: public
     database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: search.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
 - key: redis
   data:
     redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
 - key: analytic.redis
   data:
     redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
-- key: admin_api.auth
-  data:
-    type: static_token
-    static_token: "${MINIO_ROOT_PASSWORD}"
-- key: sso.oauth.client
-  data:
-    client_secret: "${REDIS_PASSWORD}"
-- key: csrf
-  data:
-    secret: "${POSTGRES_PASSWORD}"
-- key: webhook
-  data:
-    secret: "${MINIO_ROOT_PASSWORD}"
-- key: oidc
-  data:
-    keys:
-    - kid: main
-      kty: RSA
-      use: sig
-      alg: RS256
-      n: "xGOr-H7wCc6bKKhWFvQPRQPQHawZaPEBbNDeG3ePM9j3hc3g4cNXEKDwEJ7xzQGf77W3lMVIqVEjQdSjLhqaqRPL_tCpJ3haBYB8qVmyDvnhVJqKDOJqj4iUXTHJxSAHlBY-JrAVcLVqkAXWqKQdqq5XEQpWXjPD4z85Z0mMXdJhH7cAnDPkbHuJGcHqLvVLFcGkHm0H6z3gYVw5pDqcVqPBN9w7E3SJQcPFLlm4SgUqDvHQLbdYQhWH7mP-lqJC7eVDW4mJ3qQHH5VFx4L4bGVR0UVqLmDJj3H7VqPqWLJ5V4H3VqL4mJ3qQH"
-      e: "AQAB"
-      d: "xGOr"
-      p: "xGOr"
-      q: "xGOr"
-      dp: "xGOr"
-      dq: "xGOr"
-      qi: "xGOr"
 EOF
     
     log_info "Configuration files created ✓"

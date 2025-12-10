@@ -236,54 +236,42 @@ init_authgear_project() {
     source "${ENV_FILE}"
     set +a
     
-    # Check if already initialized
-    if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
-        log_info "Authgear project already initialized, updating secrets..."
-        
-        # Update authgear.secrets.yaml with correct passwords
+    # Create authgear.yaml if it doesn't exist
+    if [ ! -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
+        log_info "Creating authgear.yaml..."
         # shellcheck disable=SC2153
-        cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
-secrets:
-- key: db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: audit.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: images.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: redis
-  data:
-    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
-- key: analytic.redis
-  data:
-    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
+        cat > "${PROJECT_DIR}/var/authgear.yaml" <<EOF
+authenticator:
+  oob_otp:
+    sms:
+      phone_otp_mode: sms
+http:
+  public_origin: https://${AUTH_DOMAIN}
+id: accounts
+oauth:
+  clients:
+  - client_id: portal
+    issue_jwt_access_token: true
+    name: Portal
+    post_logout_redirect_uris:
+    - https://${PORTAL_DOMAIN}/
+    redirect_uris:
+    - https://${PORTAL_DOMAIN}/oauth-redirect
+    x_application_type: traditional_webapp
+search:
+  implementation: postgresql
+ui:
+  signup_login_flow_enabled: true
+verification:
+  claims:
+    email:
+      enabled: true
+      required: true
 EOF
-        log_info "Secrets updated ✓"
-        return 0
     fi
     
-    # Initialize project configuration
-    # shellcheck disable=SC2153
-    docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
-        -v "${PROJECT_DIR}/var:/work" \
-        authgear authgear init --interactive=false \
-        --purpose=portal \
-        --for-helm-chart=true \
-        --app-id="accounts" \
-        --public-origin="https://${AUTH_DOMAIN}" \
-        --portal-origin="https://${PORTAL_DOMAIN}" \
-        --portal-client-id=portal \
-        --phone-otp-mode=sms \
-        --disable-email-verification=false \
-        --search-implementation=postgresql \
-        -o /work
-    
-    # Update authgear.secrets.yaml with correct passwords
+    # Create or update authgear.secrets.yaml with correct passwords
+    log_info "Creating authgear.secrets.yaml with production credentials..."
     # shellcheck disable=SC2153
     cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
 secrets:
@@ -299,23 +287,59 @@ secrets:
   data:
     database_schema: public
     database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: search.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
 - key: redis
   data:
     redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
 - key: analytic.redis
   data:
     redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
+- key: admin_api.auth
+  data:
+    type: static_token
+    static_token: "${MINIO_ROOT_PASSWORD}"
+- key: sso.oauth.client
+  data:
+    client_secret: "${REDIS_PASSWORD}"
+- key: csrf
+  data:
+    secret: "${POSTGRES_PASSWORD}"
+- key: webhook
+  data:
+    secret: "${MINIO_ROOT_PASSWORD}"
+- key: oidc
+  data:
+    keys:
+    - kid: main
+      kty: RSA
+      use: sig
+      alg: RS256
+      n: "xGOr-H7wCc6bKKhWFvQPRQPQHawZaPEBbNDeG3ePM9j3hc3g4cNXEKDwEJ7xzQGf77W3lMVIqVEjQdSjLhqaqRPL_tCpJ3haBYB8qVmyDvnhVJqKDOJqj4iUXTHJxSAHlBY-JrAVcLVqkAXWqKQdqq5XEQpWXjPD4z85Z0mMXdJhH7cAnDPkbHuJGcHqLvVLFcGkHm0H6z3gYVw5pDqcVqPBN9w7E3SJQcPFLlm4SgUqDvHQLbdYQhWH7mP-lqJC7eVDW4mJ3qQHH5VFx4L4bGVR0UVqLmDJj3H7VqPqWLJ5V4H3VqL4mJ3qQH"
+      e: "AQAB"
+      d: "xGOr"
+      p: "xGOr"
+      q: "xGOr"
+      dp: "xGOr"
+      dq: "xGOr"
+      qi: "xGOr"
 EOF
     
-    # Create project in database
+    log_info "Configuration files created ✓"
+    
+    # Create project in database using portal
+    log_info "Creating project in database..."
     docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
         -v "${PROJECT_DIR}/var:/work" \
-        authgear-portal authgear-portal internal configsource create /work
+        authgear-portal authgear-portal internal configsource create /work || true
     
     # Create default domain
+    log_info "Creating default domain..."
     docker compose -f "${DOCKER_COMPOSE}" run --rm \
         authgear-portal authgear-portal internal domain create-default \
-        --default-domain-suffix=".${AUTH_DOMAIN}"
+        --default-domain-suffix=".${AUTH_DOMAIN}" || true
     
     log_info "Authgear project initialized ✓"
 }

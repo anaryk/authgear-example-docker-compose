@@ -154,7 +154,7 @@ configure_domains() {
 build_images() {
     log_info "Building custom Docker images..."
     
-    docker build -t ghcr.io/anaryk/authgear-postgres:latest "${SCRIPT_DIR}/postgres"
+    docker build -t ghcr.io/anaryk/authgear-postgres:latest "${PROJECT_DIR}/postgres"
     
     log_info "Docker images built successfully ✓"
 }

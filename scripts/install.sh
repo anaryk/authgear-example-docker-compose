@@ -236,13 +236,41 @@ init_authgear_project() {
     source "${ENV_FILE}"
     set +a
     
-    # Create accounts directory if it doesn't exist
-    mkdir -p "${PROJECT_DIR}/accounts"
+    # Check if already initialized
+    if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
+        log_info "Authgear project already initialized, updating secrets..."
+        
+        # Update authgear.secrets.yaml with correct passwords
+        # shellcheck disable=SC2153
+        cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
+secrets:
+- key: db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: audit.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: images.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: redis
+  data:
+    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+- key: analytic.redis
+  data:
+    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
+EOF
+        log_info "Secrets updated ✓"
+        return 0
+    fi
     
     # Initialize project configuration
     # shellcheck disable=SC2153
     docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
-        -v "${PROJECT_DIR}/accounts:/work" \
+        -v "${PROJECT_DIR}/var:/work" \
         authgear authgear init --interactive=false \
         --purpose=portal \
         --for-helm-chart=true \
@@ -255,9 +283,33 @@ init_authgear_project() {
         --search-implementation=postgresql \
         -o /work
     
+    # Update authgear.secrets.yaml with correct passwords
+    # shellcheck disable=SC2153
+    cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
+secrets:
+- key: db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: audit.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: images.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: redis
+  data:
+    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+- key: analytic.redis
+  data:
+    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
+EOF
+    
     # Create project in database
     docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
-        -v "${PROJECT_DIR}/accounts:/work" \
+        -v "${PROJECT_DIR}/var:/work" \
         authgear-portal authgear-portal internal configsource create /work
     
     # Create default domain

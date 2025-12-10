@@ -143,6 +143,11 @@ services:
     image: quay.io/theauthgear/authgear-server:2025-11-26.0
     container_name: authgear_server
     restart: unless-stopped
+    command:
+      - authgear
+      - start
+      - --config
+      - /app
     volumes:
       - ./var:/app:ro
     env_file:
@@ -180,6 +185,11 @@ services:
     image: quay.io/theauthgear/authgear-server:2025-11-26.0
     container_name: authgear_images
     restart: unless-stopped
+    command:
+      - authgear
+      - images
+      - --config
+      - /app
     volumes:
       - ./var:/app:ro
     env_file:
@@ -217,6 +227,11 @@ services:
     image: quay.io/theauthgear/authgear-portal:2025-11-26.0
     container_name: authgear_portal
     restart: unless-stopped
+    command:
+      - authgear-portal
+      - start
+      - --config
+      - /app
     volumes:
       - ./var:/app:ro
     env_file:

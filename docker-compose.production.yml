@@ -146,8 +146,12 @@ services:
     command:
       - authgear
       - start
-      - --config
-      - /app
+      - main
+      - resolver
+      - admin
+    environment:
+      CONFIG_SOURCE_TYPE: local_fs
+      CONFIG_SOURCE_DIRECTORY: /app
     volumes:
       - ./var:/app:ro
     env_file:
@@ -188,8 +192,9 @@ services:
     command:
       - authgear
       - images
-      - --config
-      - /app
+    environment:
+      CONFIG_SOURCE_TYPE: local_fs
+      CONFIG_SOURCE_DIRECTORY: /app
     volumes:
       - ./var:/app:ro
     env_file:
@@ -230,8 +235,9 @@ services:
     command:
       - authgear-portal
       - start
-      - --config
-      - /app
+    environment:
+      CONFIG_SOURCE_TYPE: local_fs
+      CONFIG_SOURCE_DIRECTORY: /app
     volumes:
       - ./var:/app:ro
     env_file:

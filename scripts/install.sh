@@ -287,6 +287,10 @@ secrets:
   data:
     database_schema: public
     database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+- key: search.db
+  data:
+    database_schema: public
+    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
 - key: redis
   data:
     redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"

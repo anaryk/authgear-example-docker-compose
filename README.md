@@ -3,6 +3,8 @@
 This is a demo of how you can run Authgear with Docker Compose locally.
 This setup is NOT intended for production use.
 
+For production deployment, see [README.production.md](README.production.md).
+
 ## Quick Start (Automated)
 
 ```sh

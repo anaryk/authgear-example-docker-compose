@@ -1,12 +1,21 @@
 DEV_MODE=true
 LOG_LEVEL=info
 TRUST_PROXY=true
+
+# PostgreSQL Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=postgres
+
 DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
 DATABASE_SCHEMA=public
 AUDIT_DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
 AUDIT_DATABASE_SCHEMA=public
 SEARCH_DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
 SEARCH_DATABASE_SCHEMA=public
+
+# Redis Configuration
+REDIS_PASSWORD=
 REDIS_URL=redis://redis:6379/0
 ANALYTIC_REDIS_URL=redis://redis:6379/1
 
@@ -21,6 +30,10 @@ AUTHGEAR_ENDPOINT_INTERNAL=http://nginx:3100
 AUTHGEAR_WEB_SDK_SESSION_TYPE=refresh_token
 ADMIN_API_ENDPOINT=http://authgear:3002
 APP_HOST_SUFFIX=.localhost:3100
+
+# MinIO Configuration
+MINIO_ROOT_USER=minio
+MINIO_ROOT_PASSWORD=secretpassword
 
 IMAGES_OBJECT_STORE_TYPE=MINIO
 IMAGES_OBJECT_STORE_MINIO_ENDPOINT=http://minio:9000

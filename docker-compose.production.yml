@@ -192,8 +192,7 @@ services:
       CONFIG_SOURCE_DIRECTORY: /app
       TRUST_PROXY: "true"
     volumes:
-      - ./var:/app:ro
-      - ./var/authgear.images.secrets.yaml:/app/authgear.secrets.yaml:ro
+      - ./var/images:/app:ro
     env_file:
       - env
     networks:

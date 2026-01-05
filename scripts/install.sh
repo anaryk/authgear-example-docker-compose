@@ -346,10 +346,18 @@ secrets:
     redis_url: ${ANALYTIC_REDIS_URL}
 EOF
 
+    # Create dedicated configuration directory for images service
+    # This avoids issues with search.db secret key which is not supported by images service
+    log_info "Creating dedicated configuration for images service..."
+    mkdir -p "${PROJECT_DIR}/var/images"
+    
+    # Copy authgear.yaml
+    if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
+        cp "${PROJECT_DIR}/var/authgear.yaml" "${PROJECT_DIR}/var/images/authgear.yaml"
+    fi
+    
     # Create authgear.secrets.yaml for images service (excluding search.db)
-    # The images service does not support search.db secret key
-    log_info "Creating authgear.images.secrets.yaml..."
-    cat > "${PROJECT_DIR}/var/authgear.images.secrets.yaml" <<EOF
+    cat > "${PROJECT_DIR}/var/images/authgear.secrets.yaml" <<EOF
 secrets:
 - key: db
   data:

@@ -88,9 +88,13 @@ def create_images_config(main_file, output_file):
     if not images_secret:
         print("Warning: 'images' secret not found in main config")
 
-    # Get standard secrets but filter out search.db
+    # Define allowed keys for images service
+    # Strictly limit to what authgear-images needs to avoid "unknown secret key" errors
+    ALLOWED_KEYS = ['db', 'images.db']
+
+    # Get standard secrets and filter
     all_secrets = get_env_secrets()
-    filtered_secrets = [s for s in all_secrets if s['key'] != 'search.db']
+    filtered_secrets = [s for s in all_secrets if s['key'] in ALLOWED_KEYS]
     
     if images_secret:
         filtered_secrets.append(images_secret)

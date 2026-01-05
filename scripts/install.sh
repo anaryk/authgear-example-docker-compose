@@ -333,14 +333,14 @@ init_authgear_project() {
     # WITHOUT being corrupted by our subsequent edits to the main file
     cp "${PROJECT_DIR}/var/authgear.secrets.yaml" "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
 
-    # Function to append secrets to a file
-    append_secrets() {
+    # NOTE: We previously used a Python script to manage secrets, but it caused issues
+    # because the 'pyyaml' library strips critical fields (like 'n') from RSA keys 
+    # when parsing/dumping. We now use simple text appending to preserve key integrity.
+
+    # Function to append secrets for MAIN authgear
+    append_secrets_main() {
         local file="$1"
         local include_search="$2"
-        
-        # Detect indentation of the last line to match style
-        # If file ends with "secrets:", we use 0 indent (or 2 spaces if preferred, but list items usually align)
-        # If file has existing items "- key:", we match that.
         
         # Simple heuristic: append with standard YAML list format
         # We ensure a newline before appending
@@ -380,13 +380,32 @@ EOF
 EOF
     }
 
+    # Function to append secrets for IMAGES service
+    # Authgear Images service is strict and only accepts specific keys.
+    # It likely needs 'db' (for its own data) and 'redis'.
+    # It might reject 'audit.db', 'images.db' (ironically), 'analytic.redis'.
+    append_secrets_images() {
+        local file="$1"
+        
+        echo "" >> "$file"
+        cat >> "$file" <<EOF
+- key: db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: redis
+  data:
+    redis_url: ${REDIS_URL}
+EOF
+    }
+
     # Update MAIN secrets file (include search.db)
     log_info "Appending secrets to main config..."
-    append_secrets "${PROJECT_DIR}/var/authgear.secrets.yaml" "true"
+    append_secrets_main "${PROJECT_DIR}/var/authgear.secrets.yaml" "true"
 
-    # Update IMAGES secrets file (EXCLUDE search.db)
+    # Update IMAGES secrets file (Strict subset)
     log_info "Appending secrets to images config..."
-    append_secrets "${PROJECT_DIR}/var/images/authgear.secrets.yaml" "false"
+    append_secrets_images "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
     
     log_info "Configuration files created ✓"
     

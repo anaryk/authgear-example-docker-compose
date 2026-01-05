@@ -75,30 +75,15 @@ def merge_main(main_file):
     print(f"Updated {main_file}")
 
 def create_images_config(main_file, output_file):
-    # Read main file to get the 'images' secret
-    images_secret = None
-    if os.path.exists(main_file):
-        with open(main_file, 'r') as f:
-            doc = yaml.safe_load(f) or {}
-            for s in doc.get('secrets', []):
-                if s['key'] == 'images':
-                    images_secret = s
-                    break
-    
-    if not images_secret:
-        print("Warning: 'images' secret not found in main config")
-
     # Define allowed keys for images service
     # Strictly limit to what authgear-images needs to avoid "unknown secret key" errors
-    ALLOWED_KEYS = ['db', 'images.db']
+    # We exclude 'images' secret because it causes unknown key error
+    ALLOWED_KEYS = ['db', 'redis']
 
     # Get standard secrets and filter
     all_secrets = get_env_secrets()
     filtered_secrets = [s for s in all_secrets if s['key'] in ALLOWED_KEYS]
     
-    if images_secret:
-        filtered_secrets.append(images_secret)
-
     output_doc = {'secrets': filtered_secrets}
     
     with open(output_file, 'w') as f:

@@ -17,6 +17,13 @@ HOST_DOMAIN=${HOST_DOMAIN%/} # Remove trailing slash if any
 
 echo -e "${GREEN}Creating admin user ($EMAIL)...${NC}"
 
+# 0. Ensure Project Exists in Portal (REQUIRED for App to be recognized in some contexts, and for Portal access)
+echo "Ensuring project 'accounts' exists in Portal..."
+# We run these commands to register the app in the Portal's database.
+# This corresponds to Step 6 in the README.
+docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal configsource create /app || true
+docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal domain create-default --default-domain-suffix "$APP_HOST_SUFFIX" || true
+
 # 1. Create User via Admin API
 # We use 'docker compose exec' to run inside the running authgear container
 echo "Invoking Admin API to create user..."
@@ -42,6 +49,8 @@ NODE_ID=$(echo "$OUTPUT" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$NODE_ID" ]; then
     echo "Error: Could not extract User ID from response."
+    echo "Debug: Checking authgear.yaml content..."
+    docker compose -f docker-compose.production.yml exec -T authgear cat /app/authgear.yaml
     exit 1
 fi
 
@@ -65,12 +74,7 @@ USER_UUID=${DECODED#User:}
 echo "User UUID: $USER_UUID"
 
 # 2.5 Ensure Project Exists in Portal
-echo "Ensuring project 'accounts' exists in Portal..."
-# We try to create the config source and domain. If they exist, it might fail but that's okay (or we can check first).
-# The simplest way is to just run the commands and ignore specific errors, or just run them.
-# Based on README Step 6:
-docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal configsource create /app || true
-docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal domain create-default --default-domain-suffix "$APP_HOST_SUFFIX" || true
+# (Moved to step 0)
 
 # 3. Grant Collaborator Role
 echo "Granting 'owner' role to user..."

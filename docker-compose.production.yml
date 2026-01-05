@@ -155,7 +155,7 @@ services:
     volumes:
       - ./var:/app:ro
     env_file:
-      - .env
+      - env
     networks:
       - authgear_network
     depends_on:
@@ -199,7 +199,7 @@ services:
     volumes:
       - ./var:/app:ro
     env_file:
-      - .env
+      - env
     networks:
       - authgear_network
     depends_on:
@@ -242,7 +242,7 @@ services:
     volumes:
       - ./var:/app:ro
     env_file:
-      - .env
+      - env
     networks:
       - authgear_network
     depends_on:

@@ -56,7 +56,8 @@ main() {
     rm -rf ./accounts/*
     touch ./accounts/.gitkeep
     
-    log_info "Mažu .env soubor..."
+    log_info "Mažu env soubor..."
+    rm -f env
     rm -f .env
     
     echo

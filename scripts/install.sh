@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 readonly PROJECT_DIR
-readonly ENV_FILE="${PROJECT_DIR}/.env"
+readonly ENV_FILE="${PROJECT_DIR}/env"
 readonly ENV_EXAMPLE="${PROJECT_DIR}/.env.example"
 readonly DOCKER_COMPOSE="${PROJECT_DIR}/docker-compose.production.yml"
 

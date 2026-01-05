@@ -60,11 +60,11 @@ else
     check_fail "var/authgear.secrets.yaml is MISSING"
 fi
 
-# Check .env file
-if [ -f ".env" ]; then
-    check_pass ".env file exists"
+# Check env file (production uses 'env' without dot)
+if [ -f "env" ]; then
+    check_pass "env file exists"
 else
-    check_fail ".env file is MISSING"
+    check_fail "env file is MISSING"
 fi
 
 # Check docker-compose.production.yml

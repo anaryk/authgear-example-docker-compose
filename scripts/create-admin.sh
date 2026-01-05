@@ -64,6 +64,14 @@ USER_UUID=${DECODED#User:}
 
 echo "User UUID: $USER_UUID"
 
+# 2.5 Ensure Project Exists in Portal
+echo "Ensuring project 'accounts' exists in Portal..."
+# We try to create the config source and domain. If they exist, it might fail but that's okay (or we can check first).
+# The simplest way is to just run the commands and ignore specific errors, or just run them.
+# Based on README Step 6:
+docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal configsource create /app || true
+docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal domain create-default --default-domain-suffix "$APP_HOST_SUFFIX" || true
+
 # 3. Grant Collaborator Role
 echo "Granting 'owner' role to user..."
 docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal internal collaborator add \

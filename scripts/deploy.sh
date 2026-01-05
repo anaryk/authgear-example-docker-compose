@@ -139,6 +139,7 @@ docker compose -f docker-compose.production.yml up -d --build
 
 log_info "Running database migrations..."
 docker compose -f docker-compose.production.yml run --rm authgear authgear database migrate up
+docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal database migrate up
 
 log_info "Waiting for services to be healthy..."
 sleep 10

@@ -251,12 +251,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     deploy:
       resources:
         limits:

@@ -309,34 +309,13 @@ init_authgear_project() {
         log_info "authgear.yaml already exists, skipping init ✓"
     fi
     
-    # Create or update authgear.secrets.yaml with correct passwords
-    log_info "Creating authgear.secrets.yaml with production credentials..."
-    # shellcheck disable=SC2153
-    cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
-secrets:
-- key: db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: audit.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: images.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: search.db
-  data:
-    database_schema: public
-    database_url: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
-- key: redis
-  data:
-    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/0"
-- key: analytic.redis
-  data:
-    redis_url: "redis://:${REDIS_PASSWORD}@redis:6379/1"
-EOF
+    # For local_fs config source with env_file, we don't need authgear.secrets.yaml
+    # Database and Redis credentials are provided via environment variables from .env file
+    # Remove any existing authgear.secrets.yaml to avoid conflicts
+    if [ -f "${PROJECT_DIR}/var/authgear.secrets.yaml" ]; then
+        log_info "Removing authgear.secrets.yaml (not needed for local_fs config source)..."
+        rm -f "${PROJECT_DIR}/var/authgear.secrets.yaml"
+    fi
     
     log_info "Configuration files created ✓"
     

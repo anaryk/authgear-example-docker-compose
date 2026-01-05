@@ -148,6 +148,7 @@ services:
     environment:
       CONFIG_SOURCE_TYPE: local_fs
       CONFIG_SOURCE_DIRECTORY: /app
+      TRUST_PROXY: "true"
     volumes:
       - ./var:/app:ro
     env_file:
@@ -192,6 +193,7 @@ services:
     environment:
       CONFIG_SOURCE_TYPE: local_fs
       CONFIG_SOURCE_DIRECTORY: /app
+      TRUST_PROXY: "true"
     volumes:
       - ./var:/app:ro
     env_file:

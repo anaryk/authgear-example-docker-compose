@@ -409,6 +409,10 @@ show_next_steps() {
     echo "   - Port 3100 for auth domain"
     echo "   - Port 8010 for portal domain"
     echo
+    echo "   OR if using Cloudflare Tunnel:"
+    echo "   - Point ${AUTH_DOMAIN} to http://localhost:3100"
+    echo "   - Point ${PORTAL_DOMAIN} to http://localhost:8010"
+    echo
     echo "3. Verify services are listening on correct ports:"
     echo "   ss -tlnp | grep -E ':(3100|8010)'"
     echo

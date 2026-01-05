@@ -104,6 +104,11 @@ cleanup_installation() {
     log_info "Cleaning var directory..."
     rm -rf "${PROJECT_DIR}/var/"* || true
     
+    # Remove accounts directory contents (keep the directory)
+    log_info "Cleaning accounts directory..."
+    rm -rf "${PROJECT_DIR}/accounts/"* || true
+    touch "${PROJECT_DIR}/accounts/.gitkeep" || true
+    
     # Remove .env file
     if [ -f "${ENV_FILE}" ]; then
         log_info "Removing existing .env file..."
@@ -277,38 +282,37 @@ init_authgear_project() {
     source "${ENV_FILE}"
     set +a
     
-    # Create authgear.yaml if it doesn't exist
+# Initialize Authgear project
+init_authgear_project() {
+    log_info "Initializing Authgear project..."
+    
+    # Source environment variables
+    set -a
+    # shellcheck source=/dev/null
+    source "${ENV_FILE}"
+    set +a
+    
+    # Create authgear.yaml using authgear init command
     if [ ! -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
-        log_info "Creating authgear.yaml..."
+        log_info "Generating project configuration with authgear init..."
         # shellcheck disable=SC2153
-        cat > "${PROJECT_DIR}/var/authgear.yaml" <<EOF
-authenticator:
-  oob_otp:
-    sms:
-      phone_otp_mode: sms
-http:
-  public_origin: https://${AUTH_DOMAIN}
-id: accounts
-oauth:
-  clients:
-  - client_id: portal
-    issue_jwt_access_token: true
-    name: Portal
-    post_logout_redirect_uris:
-    - https://${PORTAL_DOMAIN}/
-    redirect_uris:
-    - https://${PORTAL_DOMAIN}/oauth-redirect
-    x_application_type: traditional_webapp
-search:
-  implementation: postgresql
-ui:
-  signup_login_flow_enabled: true
-verification:
-  claims:
-    email:
-      enabled: true
-      required: true
-EOF
+        docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
+            -v "${PROJECT_DIR}/var:/work" \
+            authgear authgear init --interactive=false \
+                --purpose=portal \
+                --for-helm-chart=true \
+                --app-id="accounts" \
+                --public-origin="https://${AUTH_DOMAIN}" \
+                --portal-origin="https://${PORTAL_DOMAIN}" \
+                --portal-client-id=portal \
+                --phone-otp-mode=sms \
+                --disable-email-verification=false \
+                --search-implementation=postgresql \
+                -o /work
+        
+        log_info "Project configuration generated ✓"
+    else
+        log_info "authgear.yaml already exists, skipping init ✓"
     fi
     
     # Create or update authgear.secrets.yaml with correct passwords
@@ -342,18 +346,8 @@ EOF
     
     log_info "Configuration files created ✓"
     
-    # Create project in database using portal
-    log_info "Creating project in database..."
-    docker compose -f "${DOCKER_COMPOSE}" run --rm --workdir "/work" \
-        -v "${PROJECT_DIR}/var:/work" \
-        authgear-portal authgear-portal internal configsource create /work || true
-    
-    # Create default domain
-    log_info "Creating default domain..."
-    docker compose -f "${DOCKER_COMPOSE}" run --rm \
-        authgear-portal authgear-portal internal domain create-default \
-        --default-domain-suffix=".${AUTH_DOMAIN}" || true
-    
+    # For local_fs config source, we don't need to create project in database
+    # The configuration files in var/ directory are used directly
     log_info "Authgear project initialized ✓"
 }
 

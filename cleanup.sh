@@ -52,6 +52,10 @@ main() {
     log_info "Čistím var adresář..."
     rm -rf ./var/*
     
+    log_info "Čistím accounts adresář..."
+    rm -rf ./accounts/*
+    touch ./accounts/.gitkeep
+    
     log_info "Mažu .env soubor..."
     rm -f .env
     

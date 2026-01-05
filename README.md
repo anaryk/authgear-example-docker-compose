@@ -3,7 +3,23 @@
 This is a demo of how you can run Authgear with Docker Compose locally.
 This setup is NOT intended for production use.
 
-## First time setup
+## Quick Start (Automated)
+
+```sh
+# Run the automated setup script
+./setup-dev.sh
+```
+
+This script will:
+1. Start PostgreSQL, Redis, and MinIO
+2. Run all database migrations
+3. Create MinIO buckets
+4. Initialize the "accounts" project
+5. Start all Authgear services
+
+After the script completes, follow the instructions to create your first user.
+
+## First time setup (Manual)
 
 ### Step 0: Edit your /etc/hosts on your host machine
 

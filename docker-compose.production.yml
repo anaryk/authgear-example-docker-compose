@@ -192,6 +192,7 @@ services:
     command:
       - authgear
       - images
+      - start
     environment:
       CONFIG_SOURCE_TYPE: local_fs
       CONFIG_SOURCE_DIRECTORY: /app

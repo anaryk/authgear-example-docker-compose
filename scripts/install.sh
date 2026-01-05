@@ -286,6 +286,23 @@ init_authgear_project() {
     source "${ENV_FILE}"
     set +a
     
+    # Check if we need to force re-init due to broken state
+    if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
+        # Check if secrets file is valid (has generated keys)
+        if [ -f "${PROJECT_DIR}/var/authgear.secrets.yaml" ]; then
+            if ! grep -q "admin-api.auth" "${PROJECT_DIR}/var/authgear.secrets.yaml"; then
+                log_warn "authgear.secrets.yaml exists but is missing generated keys (admin-api.auth)."
+                log_warn "Deleting var/ directory to force re-initialization..."
+                rm -rf "${PROJECT_DIR}/var"
+            fi
+        else
+            # Secrets file missing but config exists - inconsistent state
+            log_warn "authgear.yaml exists but authgear.secrets.yaml is missing."
+            log_warn "Deleting var/ directory to force re-initialization..."
+            rm -rf "${PROJECT_DIR}/var"
+        fi
+    fi
+
     # Create authgear.yaml using authgear init command
     if [ ! -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
         log_info "Generating project configuration with authgear init..."
@@ -361,10 +378,6 @@ init_authgear_project() {
   data:
     database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
     database_url: ${AUDIT_DATABASE_URL}
-- key: images.db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
 EOF
 
         if [ "$include_search" = "true" ]; then
@@ -380,9 +393,6 @@ EOF
 - key: redis
   data:
     redis_url: ${REDIS_URL}
-- key: analytic.redis
-  data:
-    redis_url: ${ANALYTIC_REDIS_URL}
 EOF
     }
 

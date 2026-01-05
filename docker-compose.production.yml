@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -35,6 +37,8 @@ services:
     image: redis:7-alpine
     container_name: authgear_redis
     restart: unless-stopped
+    env_file:
+      - env
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -47,7 +51,7 @@ services:
     networks:
       - authgear_network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -78,6 +82,8 @@ services:
       - ":9001"
     volumes:
       - minio_data:/data
+    env_file:
+      - env
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}

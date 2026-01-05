@@ -15,9 +15,9 @@ SEARCH_DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=
 SEARCH_DATABASE_SCHEMA=public
 
 # Redis Configuration
-REDIS_PASSWORD=
-REDIS_URL=redis://redis:6379/0
-ANALYTIC_REDIS_URL=redis://redis:6379/1
+REDIS_PASSWORD=redis_secret_password
+REDIS_URL=redis://:redis_secret_password@redis:6379/0
+ANALYTIC_REDIS_URL=redis://:redis_secret_password@redis:6379/1
 
 CONFIG_SOURCE_TYPE=database
 CUSTOM_RESOURCE_DIRECTORY=/app

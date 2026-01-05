@@ -318,27 +318,8 @@ init_authgear_project() {
         log_warn "authgear.secrets.yaml not found, creating from scratch..."
         echo "secrets: []" > "${PROJECT_DIR}/var/authgear.secrets.yaml"
     fi
-    
-    # Use python script to safely merge secrets
-    # We run this inside a docker container to ensure python and pyyaml are available
-    log_info "Running configuration update script..."
-    
-    # Pass environment variables to the container
-    docker run --rm \
-        -v "${PROJECT_DIR}/var:/var_config" \
-        -v "${SCRIPT_DIR}:/scripts" \
-        -e DATABASE_URL="${DATABASE_URL}" \
-        -e DATABASE_SCHEMA="${DATABASE_SCHEMA:-public}" \
-        -e AUDIT_DATABASE_URL="${AUDIT_DATABASE_URL}" \
-        -e AUDIT_DATABASE_SCHEMA="${AUDIT_DATABASE_SCHEMA:-public}" \
-        -e SEARCH_DATABASE_URL="${SEARCH_DATABASE_URL}" \
-        -e SEARCH_DATABASE_SCHEMA="${SEARCH_DATABASE_SCHEMA:-public}" \
-        -e REDIS_URL="${REDIS_URL}" \
-        -e ANALYTIC_REDIS_URL="${ANALYTIC_REDIS_URL}" \
-        python:3-alpine sh -c "pip install -q pyyaml >/dev/null 2>&1 && python /scripts/manage_secrets.py merge_main /var_config/authgear.secrets.yaml"
 
     # Create dedicated configuration directory for images service
-    # This avoids issues with search.db secret key which is not supported by images service
     log_info "Creating dedicated configuration for images service..."
     mkdir -p "${PROJECT_DIR}/var/images"
     
@@ -346,22 +327,66 @@ init_authgear_project() {
     if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
         cp "${PROJECT_DIR}/var/authgear.yaml" "${PROJECT_DIR}/var/images/authgear.yaml"
     fi
-    
-    # Create authgear.secrets.yaml for images service (excluding search.db)
-    # We use the python script to create this file cleanly
-    log_info "Generating secrets for images service..."
-    docker run --rm \
-        -v "${PROJECT_DIR}/var:/var_config" \
-        -v "${SCRIPT_DIR}:/scripts" \
-        -e DATABASE_URL="${DATABASE_URL}" \
-        -e DATABASE_SCHEMA="${DATABASE_SCHEMA:-public}" \
-        -e AUDIT_DATABASE_URL="${AUDIT_DATABASE_URL}" \
-        -e AUDIT_DATABASE_SCHEMA="${AUDIT_DATABASE_SCHEMA:-public}" \
-        -e SEARCH_DATABASE_URL="${SEARCH_DATABASE_URL}" \
-        -e SEARCH_DATABASE_SCHEMA="${SEARCH_DATABASE_SCHEMA:-public}" \
-        -e REDIS_URL="${REDIS_URL}" \
-        -e ANALYTIC_REDIS_URL="${ANALYTIC_REDIS_URL}" \
-        python:3-alpine sh -c "pip install -q pyyaml >/dev/null 2>&1 && python /scripts/manage_secrets.py create_images /var_config/authgear.secrets.yaml /var_config/images/authgear.secrets.yaml"
+
+    # Copy the CLEAN authgear.secrets.yaml (with only generated keys) to images directory
+    # This ensures images service gets the required keys (admin-api.auth, oauth, csrf)
+    # WITHOUT being corrupted by our subsequent edits to the main file
+    cp "${PROJECT_DIR}/var/authgear.secrets.yaml" "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
+
+    # Function to append secrets to a file
+    append_secrets() {
+        local file="$1"
+        local include_search="$2"
+        
+        # Detect indentation of the last line to match style
+        # If file ends with "secrets:", we use 0 indent (or 2 spaces if preferred, but list items usually align)
+        # If file has existing items "- key:", we match that.
+        
+        # Simple heuristic: append with standard YAML list format
+        # We ensure a newline before appending
+        echo "" >> "$file"
+        
+        cat >> "$file" <<EOF
+- key: db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: audit.db
+  data:
+    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
+    database_url: ${AUDIT_DATABASE_URL}
+- key: images.db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+EOF
+
+        if [ "$include_search" = "true" ]; then
+            cat >> "$file" <<EOF
+- key: search.db
+  data:
+    database_schema: ${SEARCH_DATABASE_SCHEMA:-public}
+    database_url: ${SEARCH_DATABASE_URL}
+EOF
+        fi
+
+        cat >> "$file" <<EOF
+- key: redis
+  data:
+    redis_url: ${REDIS_URL}
+- key: analytic.redis
+  data:
+    redis_url: ${ANALYTIC_REDIS_URL}
+EOF
+    }
+
+    # Update MAIN secrets file (include search.db)
+    log_info "Appending secrets to main config..."
+    append_secrets "${PROJECT_DIR}/var/authgear.secrets.yaml" "true"
+
+    # Update IMAGES secrets file (EXCLUDE search.db)
+    log_info "Appending secrets to images config..."
+    append_secrets "${PROJECT_DIR}/var/images/authgear.secrets.yaml" "false"
     
     log_info "Configuration files created ✓"
     

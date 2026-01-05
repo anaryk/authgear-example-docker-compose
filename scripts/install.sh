@@ -309,13 +309,42 @@ init_authgear_project() {
         log_info "authgear.yaml already exists, skipping init ✓"
     fi
     
-    # For local_fs config source with env_file, we don't need authgear.secrets.yaml
-    # Database and Redis credentials are provided via environment variables from .env file
-    # Remove any existing authgear.secrets.yaml to avoid conflicts
-    if [ -f "${PROJECT_DIR}/var/authgear.secrets.yaml" ]; then
-        log_info "Removing authgear.secrets.yaml (not needed for local_fs config source)..."
-        rm -f "${PROJECT_DIR}/var/authgear.secrets.yaml"
+    # authgear init creates a template authgear.secrets.yaml
+    # We need to update it with production credentials
+    log_info "Updating authgear.secrets.yaml with production credentials..."
+    
+    # Check if authgear.secrets.yaml exists (created by authgear init)
+    if [ ! -f "${PROJECT_DIR}/var/authgear.secrets.yaml" ]; then
+        log_warn "authgear.secrets.yaml not found, creating from scratch..."
     fi
+    
+    # Create or update authgear.secrets.yaml with production credentials
+    # shellcheck disable=SC2153
+    cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
+secrets:
+- key: db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: audit.db
+  data:
+    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
+    database_url: ${AUDIT_DATABASE_URL}
+- key: images.db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: search.db
+  data:
+    database_schema: ${SEARCH_DATABASE_SCHEMA:-public}
+    database_url: ${SEARCH_DATABASE_URL}
+- key: redis
+  data:
+    redis_url: ${REDIS_URL}
+- key: analytic.redis
+  data:
+    redis_url: ${ANALYTIC_REDIS_URL}
+EOF
     
     log_info "Configuration files created ✓"
     

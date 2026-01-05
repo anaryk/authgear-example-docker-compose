@@ -45,8 +45,20 @@ else
     check_fail "var/authgear.yaml is MISSING"
 fi
 
-# Note: authgear.secrets.yaml is not needed for local_fs config source
-# Credentials are provided via environment variables from .env file
+# Check var/authgear.secrets.yaml
+if [ -f "./var/authgear.secrets.yaml" ]; then
+    check_pass "var/authgear.secrets.yaml exists"
+    
+    # Check for required secret keys
+    if grep -q "key: db" "./var/authgear.secrets.yaml" && \
+       grep -q "key: images.db" "./var/authgear.secrets.yaml"; then
+        check_pass "authgear.secrets.yaml contains required keys"
+    else
+        check_fail "authgear.secrets.yaml is MISSING required keys"
+    fi
+else
+    check_fail "var/authgear.secrets.yaml is MISSING"
+fi
 
 # Check .env file
 if [ -f ".env" ]; then

@@ -156,7 +156,7 @@ services:
       CONFIG_SOURCE_DIRECTORY: /app
       TRUST_PROXY: "true"
     volumes:
-      - ./var:/app:ro
+      - ./var:/app
     env_file:
       - env
     networks:
@@ -195,7 +195,7 @@ services:
       CONFIG_SOURCE_DIRECTORY: /app
       TRUST_PROXY: "true"
     volumes:
-      - ./var/images:/app:ro
+      - ./var:/app
     env_file:
       - env
     networks:
@@ -232,7 +232,7 @@ services:
       CONFIG_SOURCE_TYPE: local_fs
       CONFIG_SOURCE_DIRECTORY: /app
     volumes:
-      - ./var/portal:/app:ro
+      - ./var:/app
     env_file:
       - env
     networks:

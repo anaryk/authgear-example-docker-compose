@@ -1,6 +1,8 @@
 services:
   postgres:
-    image: ghcr.io/anaryk/authgear-postgres:latest
+    build:
+      context: ./postgres
+    image: authgear-postgres:local
     container_name: authgear_postgres
     restart: unless-stopped
     volumes:

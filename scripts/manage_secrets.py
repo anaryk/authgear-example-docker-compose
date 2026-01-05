@@ -75,15 +75,30 @@ def merge_main(main_file):
     print(f"Updated {main_file}")
 
 def create_images_config(main_file, output_file):
-    # Define allowed keys for images service
-    # Strictly limit to what authgear-images needs to avoid "unknown secret key" errors
-    # We exclude 'images' secret because it causes unknown key error
-    ALLOWED_KEYS = ['db', 'redis']
-
-    # Get standard secrets and filter
-    all_secrets = get_env_secrets()
-    filtered_secrets = [s for s in all_secrets if s['key'] in ALLOWED_KEYS]
+    # Secrets that must be copied from the main generated config
+    # The images service requires these core secrets to initialize
+    REQUIRED_FROM_MAIN = ['admin-api.auth', 'oauth', 'csrf']
     
+    # Secrets that we construct from environment variables
+    # We include images.db as well since it's specific to this service
+    REQUIRED_FROM_ENV = ['db', 'redis', 'images.db']
+
+    filtered_secrets = []
+
+    # 1. Get secrets from main config
+    if os.path.exists(main_file):
+        with open(main_file, 'r') as f:
+            doc = yaml.safe_load(f) or {}
+            for s in doc.get('secrets', []):
+                if s['key'] in REQUIRED_FROM_MAIN:
+                    filtered_secrets.append(s)
+    
+    # 2. Get secrets from env
+    env_secrets = get_env_secrets()
+    for s in env_secrets:
+        if s['key'] in REQUIRED_FROM_ENV:
+            filtered_secrets.append(s)
+
     output_doc = {'secrets': filtered_secrets}
     
     with open(output_file, 'w') as f:

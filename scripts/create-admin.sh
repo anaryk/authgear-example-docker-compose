@@ -6,7 +6,9 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 # Load env to get AUTH_DOMAIN
-source env
+set -a
+source ./env
+set +a
 
 EMAIL=${1:-admin@maxadmin.io}
 PASSWORD=${2:-AuthgearAdmin123!}

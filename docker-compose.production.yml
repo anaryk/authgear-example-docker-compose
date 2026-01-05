@@ -109,7 +109,10 @@ services:
     volumes:
       - ./nginx.production.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - authgear_network
+      authgear_network:
+        aliases:
+          - auth.maxadmin.io
+          - portal.maxadmin.io
     ports:
       - "0.0.0.0:8010:8010"
       - "0.0.0.0:3100:3100"

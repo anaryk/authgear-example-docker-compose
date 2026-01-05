@@ -319,34 +319,23 @@ init_authgear_project() {
         echo "secrets: []" > "${PROJECT_DIR}/var/authgear.secrets.yaml"
     fi
     
-    # Append production secrets to main config using cat >> to avoid corruption
-    # We ensure there is a newline before appending
-    echo "" >> "${PROJECT_DIR}/var/authgear.secrets.yaml"
+    # Use python script to safely merge secrets
+    # We run this inside a docker container to ensure python and pyyaml are available
+    log_info "Running configuration update script..."
     
-    cat >> "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
-- key: db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: audit.db
-  data:
-    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
-    database_url: ${AUDIT_DATABASE_URL}
-- key: images.db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: search.db
-  data:
-    database_schema: ${SEARCH_DATABASE_SCHEMA:-public}
-    database_url: ${SEARCH_DATABASE_URL}
-- key: redis
-  data:
-    redis_url: ${REDIS_URL}
-- key: analytic.redis
-  data:
-    redis_url: ${ANALYTIC_REDIS_URL}
-EOF
+    # Pass environment variables to the container
+    docker run --rm \
+        -v "${PROJECT_DIR}/var:/var_config" \
+        -v "${SCRIPT_DIR}:/scripts" \
+        -e DATABASE_URL="${DATABASE_URL}" \
+        -e DATABASE_SCHEMA="${DATABASE_SCHEMA:-public}" \
+        -e AUDIT_DATABASE_URL="${AUDIT_DATABASE_URL}" \
+        -e AUDIT_DATABASE_SCHEMA="${AUDIT_DATABASE_SCHEMA:-public}" \
+        -e SEARCH_DATABASE_URL="${SEARCH_DATABASE_URL}" \
+        -e SEARCH_DATABASE_SCHEMA="${SEARCH_DATABASE_SCHEMA:-public}" \
+        -e REDIS_URL="${REDIS_URL}" \
+        -e ANALYTIC_REDIS_URL="${ANALYTIC_REDIS_URL}" \
+        python:3-alpine sh -c "pip install -q pyyaml >/dev/null 2>&1 && python /scripts/manage_secrets.py merge_main /var_config/authgear.secrets.yaml"
 
     # Create dedicated configuration directory for images service
     # This avoids issues with search.db secret key which is not supported by images service
@@ -359,59 +348,20 @@ EOF
     fi
     
     # Create authgear.secrets.yaml for images service (excluding search.db)
-    cat > "${PROJECT_DIR}/var/images/authgear.secrets.yaml" <<EOF
-secrets:
-- key: db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: audit.db
-  data:
-    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
-    database_url: ${AUDIT_DATABASE_URL}
-- key: images.db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: redis
-  data:
-    redis_url: ${REDIS_URL}
-- key: analytic.redis
-  data:
-    redis_url: ${ANALYTIC_REDIS_URL}
-EOF
-
-    # Extract 'images' secret from main file and append to images config
-    # We use a temporary python script for this to safely read the YAML
-    cat > "${PROJECT_DIR}/extract_secret.py" <<PYTHON_EOF
-import yaml
-import sys
-
-try:
-    with open(sys.argv[1], 'r') as f:
-        doc = yaml.safe_load(f)
-    
-    found = False
-    for s in doc.get('secrets', []):
-        if s['key'] == 'images':
-            print(yaml.dump([s], default_flow_style=False))
-            found = True
-            break
-            
-    if not found:
-        pass
-except Exception as e:
-    sys.stderr.write(str(e))
-    sys.exit(1)
-PYTHON_EOF
-
-    # Run extraction
-    log_info "Extracting images secret..."
+    # We use the python script to create this file cleanly
+    log_info "Generating secrets for images service..."
     docker run --rm \
-        -v "${PROJECT_DIR}:/work" \
-        python:3-alpine sh -c "pip install pyyaml && python /work/extract_secret.py /work/var/authgear.secrets.yaml" >> "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
-        
-    rm "${PROJECT_DIR}/extract_secret.py"
+        -v "${PROJECT_DIR}/var:/var_config" \
+        -v "${SCRIPT_DIR}:/scripts" \
+        -e DATABASE_URL="${DATABASE_URL}" \
+        -e DATABASE_SCHEMA="${DATABASE_SCHEMA:-public}" \
+        -e AUDIT_DATABASE_URL="${AUDIT_DATABASE_URL}" \
+        -e AUDIT_DATABASE_SCHEMA="${AUDIT_DATABASE_SCHEMA:-public}" \
+        -e SEARCH_DATABASE_URL="${SEARCH_DATABASE_URL}" \
+        -e SEARCH_DATABASE_SCHEMA="${SEARCH_DATABASE_SCHEMA:-public}" \
+        -e REDIS_URL="${REDIS_URL}" \
+        -e ANALYTIC_REDIS_URL="${ANALYTIC_REDIS_URL}" \
+        python:3-alpine sh -c "pip install -q pyyaml >/dev/null 2>&1 && python /scripts/manage_secrets.py create_images /var_config/authgear.secrets.yaml /var_config/images/authgear.secrets.yaml"
     
     log_info "Configuration files created ✓"
     

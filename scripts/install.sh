@@ -310,41 +310,26 @@ init_authgear_project() {
     fi
     
     # authgear init creates a template authgear.secrets.yaml
-    # We need to update it with production credentials
+    # We need to update it with production credentials while preserving generated keys (like images JWK)
     log_info "Updating authgear.secrets.yaml with production credentials..."
     
     # Check if authgear.secrets.yaml exists (created by authgear init)
     if [ ! -f "${PROJECT_DIR}/var/authgear.secrets.yaml" ]; then
         log_warn "authgear.secrets.yaml not found, creating from scratch..."
+        # Create empty secrets file if not exists
+        echo "secrets: []" > "${PROJECT_DIR}/var/authgear.secrets.yaml"
     fi
     
-    # Create or update authgear.secrets.yaml with production credentials
-    # shellcheck disable=SC2153
-    cat > "${PROJECT_DIR}/var/authgear.secrets.yaml" <<EOF
-secrets:
-- key: db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: audit.db
-  data:
-    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
-    database_url: ${AUDIT_DATABASE_URL}
-- key: images.db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: search.db
-  data:
-    database_schema: ${SEARCH_DATABASE_SCHEMA:-public}
-    database_url: ${SEARCH_DATABASE_URL}
-- key: redis
-  data:
-    redis_url: ${REDIS_URL}
-- key: analytic.redis
-  data:
-    redis_url: ${ANALYTIC_REDIS_URL}
-EOF
+    # Use python script to safely update YAML
+    # We run this inside a docker container to ensure python and pyyaml are available
+    # We mount the scripts directory to access update_config.py
+    log_info "Running configuration update script..."
+    
+    # Update main secrets file
+    docker run --rm \
+        -v "${PROJECT_DIR}/var:/var_config" \
+        -v "${SCRIPT_DIR}:/scripts" \
+        python:3-alpine sh -c "pip install pyyaml && python /scripts/update_config.py /var_config/authgear.secrets.yaml /var_config/authgear.secrets.yaml '${DATABASE_URL}' '${AUDIT_DATABASE_URL}' '${SEARCH_DATABASE_URL}' '${REDIS_URL}' '${ANALYTIC_REDIS_URL}'"
 
     # Create dedicated configuration directory for images service
     # This avoids issues with search.db secret key which is not supported by images service
@@ -357,27 +342,13 @@ EOF
     fi
     
     # Create authgear.secrets.yaml for images service (excluding search.db)
-    cat > "${PROJECT_DIR}/var/images/authgear.secrets.yaml" <<EOF
-secrets:
-- key: db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: audit.db
-  data:
-    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
-    database_url: ${AUDIT_DATABASE_URL}
-- key: images.db
-  data:
-    database_schema: ${DATABASE_SCHEMA:-public}
-    database_url: ${DATABASE_URL}
-- key: redis
-  data:
-    redis_url: ${REDIS_URL}
-- key: analytic.redis
-  data:
-    redis_url: ${ANALYTIC_REDIS_URL}
-EOF
+    # We use the python script again to filter keys
+    # Allowed keys for images: db, audit.db, images.db, redis, analytic.redis, images
+    log_info "Generating filtered secrets for images service..."
+    docker run --rm \
+        -v "${PROJECT_DIR}/var:/var_config" \
+        -v "${SCRIPT_DIR}:/scripts" \
+        python:3-alpine sh -c "pip install pyyaml && python /scripts/update_config.py /var_config/authgear.secrets.yaml /var_config/images/authgear.secrets.yaml '${DATABASE_URL}' '${AUDIT_DATABASE_URL}' '${SEARCH_DATABASE_URL}' '${REDIS_URL}' '${ANALYTIC_REDIS_URL}' 'db,audit.db,images.db,redis,analytic.redis,images'"
     
     log_info "Configuration files created ✓"
     

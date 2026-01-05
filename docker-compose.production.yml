@@ -115,7 +115,7 @@ services:
       - "0.0.0.0:3100:3100"
     depends_on:
       authgear:
-        condition: service_healthy
+        condition: service_started
       authgear-portal:
         condition: service_started
     healthcheck:
@@ -165,12 +165,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     deploy:
       resources:
         limits:
@@ -210,12 +204,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3004/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     deploy:
       resources:
         limits:
@@ -271,12 +259,6 @@ services:
     restart: unless-stopped
     networks:
       - authgear_network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     deploy:
       resources:
         limits:

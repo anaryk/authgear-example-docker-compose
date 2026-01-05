@@ -36,7 +36,9 @@ generate_secrets() {
     # 1. Initialize Authgear (generates authgear.yaml and authgear.secrets.yaml)
     if [ ! -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
         log_info "Running authgear init..."
-        docker compose -f docker-compose.production.yml run --rm --no-deps authgear \
+        docker compose -f docker-compose.production.yml run --rm --no-deps \
+            -v "${PROJECT_DIR}/var:/app" \
+            authgear \
             authgear init --interactive=false \
             --purpose=portal \
             --for-helm-chart=true \

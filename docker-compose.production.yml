@@ -51,7 +51,7 @@ services:
     networks:
       - authgear_network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      test: ["CMD", "sh", "-c", "redis-cli -a $REDIS_PASSWORD --raw incr ping"]
       interval: 10s
       timeout: 3s
       retries: 5

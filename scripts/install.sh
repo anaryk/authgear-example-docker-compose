@@ -21,6 +21,17 @@ readonly ENV_FILE="${PROJECT_DIR}/.env"
 readonly ENV_EXAMPLE="${PROJECT_DIR}/.env.example"
 readonly DOCKER_COMPOSE="${PROJECT_DIR}/docker-compose.production.yml"
 
+# Parse command line arguments
+REINSTALL=false
+for arg in "$@"; do
+    case $arg in
+        --reinstall)
+            REINSTALL=true
+            shift
+            ;;
+    esac
+done
+
 # Logging functions
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $*"
@@ -70,6 +81,36 @@ check_prerequisites() {
     fi
     
     log_info "All prerequisites satisfied ✓"
+}
+
+# Clean up existing installation
+cleanup_installation() {
+    log_warn "Cleaning up existing installation..."
+    
+    # Stop all containers
+    log_info "Stopping all containers..."
+    docker compose -f "${DOCKER_COMPOSE}" down -v || true
+    
+    # Remove all volumes
+    log_info "Removing all volumes..."
+    docker volume rm authgear-example-docker-compose_db_data 2>/dev/null || true
+    docker volume rm authgear-example-docker-compose_redis_data 2>/dev/null || true
+    docker volume rm authgear-example-docker-compose_minio_data 2>/dev/null || true
+    docker volume rm db_data 2>/dev/null || true
+    docker volume rm redis_data 2>/dev/null || true
+    docker volume rm minio_data 2>/dev/null || true
+    
+    # Remove var directory contents (keep the directory)
+    log_info "Cleaning var directory..."
+    rm -rf "${PROJECT_DIR}/var/"* || true
+    
+    # Remove .env file
+    if [ -f "${ENV_FILE}" ]; then
+        log_info "Removing existing .env file..."
+        rm -f "${ENV_FILE}"
+    fi
+    
+    log_info "Cleanup completed ✓"
 }
 
 # Initialize environment file
@@ -398,6 +439,18 @@ main() {
     echo
     
     check_prerequisites
+    
+    # Handle reinstall flag
+    if [ "$REINSTALL" = true ]; then
+        log_warn "⚠️  REINSTALL MODE - This will DELETE all existing data!"
+        read -rp "Are you absolutely sure you want to continue? Type 'yes' to confirm: "
+        if [[ "$REPLY" != "yes" ]]; then
+            log_info "Installation cancelled"
+            exit 0
+        fi
+        cleanup_installation
+    fi
+    
     init_env_file
     configure_domains
     

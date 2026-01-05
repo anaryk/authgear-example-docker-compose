@@ -156,3 +156,30 @@ You just run
 ```sh
 docker compose up
 ```
+
+## Clean restart / Reinstallation
+
+If you encounter issues with the installation or want to start fresh:
+
+### Quick cleanup (Czech)
+
+```sh
+./cleanup.sh
+```
+
+This script will:
+- Stop all containers
+- Remove all Docker volumes (⚠️ **deletes all data!**)
+- Clean the `var/` directory
+- Remove the `.env` file
+
+After cleanup, run the setup steps again from the beginning.
+
+### Manual cleanup
+
+```sh
+docker compose down -v
+docker volume rm db_data redis_data minio_data
+rm -rf ./var/*
+rm -f .env
+```

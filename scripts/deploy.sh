@@ -36,9 +36,15 @@ generate_secrets() {
     # 1. Initialize Authgear (generates authgear.yaml and authgear.secrets.yaml)
     if [ ! -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
         log_info "Running authgear init..."
-        docker compose -f docker-compose.production.yml run --rm --no-deps \
+        
+        # Define domains if not set
+        AUTH_DOMAIN=${AUTH_DOMAIN:-auth.maxadmin.io}
+        PORTAL_DOMAIN=${PORTAL_DOMAIN:-portal.maxadmin.io}
+        
+        # Use docker run directly to avoid read-only volume mount issues from docker-compose
+        docker run --rm \
             -v "${PROJECT_DIR}/var:/app" \
-            authgear \
+            quay.io/theauthgear/authgear-server:2025-11-26.0 \
             authgear init --interactive=false \
             --purpose=portal \
             --for-helm-chart=true \
@@ -50,6 +56,8 @@ generate_secrets() {
             --disable-email-verification=false \
             --search-implementation=postgresql \
             -o /app
+            
+        log_info "authgear init completed."
     else
         log_info "authgear.yaml already exists."
     fi
@@ -132,3 +140,17 @@ docker compose -f docker-compose.production.yml up -d --build
 log_info "Waiting for services to be healthy..."
 sleep 10
 docker compose -f docker-compose.production.yml ps
+
+echo
+log_info "============================================"
+log_info "Deployment completed successfully! 🚀"
+log_info "============================================"
+echo
+log_info "Cloudflare Tunnel Configuration:"
+echo "   ┌─────────────────────────────────────────────────────────────┐"
+echo "   │ Domain                     → Service URL                    │"
+echo "   ├─────────────────────────────────────────────────────────────┤"
+echo "   │ ${AUTH_DOMAIN:-auth.maxadmin.io}   → http://localhost:3100          │"
+echo "   │ ${PORTAL_DOMAIN:-portal.maxadmin.io} → http://localhost:8010          │"
+echo "   └─────────────────────────────────────────────────────────────┘"
+echo

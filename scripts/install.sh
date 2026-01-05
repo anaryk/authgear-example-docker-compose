@@ -322,16 +322,22 @@ init_authgear_project() {
     # Create dedicated configuration directory for images service
     log_info "Creating dedicated configuration for images service..."
     mkdir -p "${PROJECT_DIR}/var/images"
+
+    # Create dedicated configuration directory for portal service
+    log_info "Creating dedicated configuration for portal service..."
+    mkdir -p "${PROJECT_DIR}/var/portal"
     
     # Copy authgear.yaml
     if [ -f "${PROJECT_DIR}/var/authgear.yaml" ]; then
         cp "${PROJECT_DIR}/var/authgear.yaml" "${PROJECT_DIR}/var/images/authgear.yaml"
+        cp "${PROJECT_DIR}/var/authgear.yaml" "${PROJECT_DIR}/var/portal/authgear.yaml"
     fi
 
-    # Copy the CLEAN authgear.secrets.yaml (with only generated keys) to images directory
-    # This ensures images service gets the required keys (admin-api.auth, oauth, csrf)
+    # Copy the CLEAN authgear.secrets.yaml (with only generated keys) to images and portal directories
+    # This ensures services get the required keys (admin-api.auth, oauth, csrf)
     # WITHOUT being corrupted by our subsequent edits to the main file
     cp "${PROJECT_DIR}/var/authgear.secrets.yaml" "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
+    cp "${PROJECT_DIR}/var/authgear.secrets.yaml" "${PROJECT_DIR}/var/portal/authgear.secrets.yaml"
 
     # NOTE: We previously used a Python script to manage secrets, but it caused issues
     # because the 'pyyaml' library strips critical fields (like 'n') from RSA keys 
@@ -399,6 +405,24 @@ EOF
 EOF
     }
 
+    # Function to append secrets for PORTAL service
+    # Authgear Portal service is also strict.
+    # It needs 'db' and 'redis'.
+    append_secrets_portal() {
+        local file="$1"
+        
+        echo "" >> "$file"
+        cat >> "$file" <<EOF
+- key: db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: redis
+  data:
+    redis_url: ${REDIS_URL}
+EOF
+    }
+
     # Update MAIN secrets file (include search.db)
     log_info "Appending secrets to main config..."
     append_secrets_main "${PROJECT_DIR}/var/authgear.secrets.yaml" "true"
@@ -406,6 +430,10 @@ EOF
     # Update IMAGES secrets file (Strict subset)
     log_info "Appending secrets to images config..."
     append_secrets_images "${PROJECT_DIR}/var/images/authgear.secrets.yaml"
+
+    # Update PORTAL secrets file (Strict subset)
+    log_info "Appending secrets to portal config..."
+    append_secrets_portal "${PROJECT_DIR}/var/portal/authgear.secrets.yaml"
     
     log_info "Configuration files created ✓"
     

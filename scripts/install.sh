@@ -345,6 +345,31 @@ secrets:
   data:
     redis_url: ${ANALYTIC_REDIS_URL}
 EOF
+
+    # Create authgear.secrets.yaml for images service (excluding search.db)
+    # The images service does not support search.db secret key
+    log_info "Creating authgear.images.secrets.yaml..."
+    cat > "${PROJECT_DIR}/var/authgear.images.secrets.yaml" <<EOF
+secrets:
+- key: db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: audit.db
+  data:
+    database_schema: ${AUDIT_DATABASE_SCHEMA:-public}
+    database_url: ${AUDIT_DATABASE_URL}
+- key: images.db
+  data:
+    database_schema: ${DATABASE_SCHEMA:-public}
+    database_url: ${DATABASE_URL}
+- key: redis
+  data:
+    redis_url: ${REDIS_URL}
+- key: analytic.redis
+  data:
+    redis_url: ${ANALYTIC_REDIS_URL}
+EOF
     
     log_info "Configuration files created ✓"
     

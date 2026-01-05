@@ -6,7 +6,11 @@ services:
     container_name: authgear_postgres
     restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_v2:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     env_file:
       - env
     networks:
@@ -42,7 +46,7 @@ services:
       - -c
       - redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes --appendfsync everysec --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
-      - redis_data:/data
+      - redis_data_v2:/data
     networks:
       - authgear_network
     healthcheck:
@@ -76,7 +80,7 @@ services:
       - "--console-address"
       - ":9001"
     volumes:
-      - minio_data:/data
+      - minio_data_v2:/data
     env_file:
       - env
     networks:
@@ -301,9 +305,9 @@ networks:
         - subnet: 172.28.0.0/16
 
 volumes:
-  postgres_data:
+  postgres_data_v2:
     driver: local
-  redis_data:
+  redis_data_v2:
     driver: local
-  minio_data:
+  minio_data_v2:
     driver: local

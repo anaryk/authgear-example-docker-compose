@@ -60,7 +60,23 @@ The installation script will:
 - ✅ Configure domains
 - ✅ Build Docker images
 - ✅ Initialize databases
+- ✅ Generate project configuration with `authgear init`
 - ✅ Start all services
+
+**Clean Reinstall:**
+```bash
+# Remove all data and start fresh
+./scripts/install.sh --reinstall
+
+# Or use the cleanup script first
+./cleanup.sh
+./scripts/install.sh
+```
+
+**Verify Installation:**
+```bash
+./verify-install.sh
+```
 
 ### 3. Configure DNS
 
@@ -93,6 +109,9 @@ Follow the [Proxy Setup Guide](./docs/PROXY-SETUP.md) to configure Nginx with SS
 │   ├── backup.sh           # Backup databases
 │   ├── health-check.sh     # Monitor services
 │   └── test.sh             # Test suite
+├── cleanup.sh              # Clean reinstall helper
+├── verify-install.sh       # Verify installation
+├── setup-dev.sh            # Development setup
 ├── docs/
 │   ├── DEPLOYMENT.md       # Deployment guide
 │   ├── DNS-SETUP.md        # DNS configuration

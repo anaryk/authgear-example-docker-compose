@@ -102,12 +102,16 @@ cleanup_installation() {
     
     # Remove var directory contents (keep the directory)
     log_info "Cleaning var directory..."
-    rm -rf "${PROJECT_DIR}/var/"* || true
+    if [ -n "${PROJECT_DIR}" ] && [ -d "${PROJECT_DIR}/var" ]; then
+        rm -rf "${PROJECT_DIR:?}/var/"* || true
+    fi
     
     # Remove accounts directory contents (keep the directory)
     log_info "Cleaning accounts directory..."
-    rm -rf "${PROJECT_DIR}/accounts/"* || true
-    touch "${PROJECT_DIR}/accounts/.gitkeep" || true
+    if [ -n "${PROJECT_DIR}" ] && [ -d "${PROJECT_DIR}/accounts" ]; then
+        rm -rf "${PROJECT_DIR:?}/accounts/"* || true
+        touch "${PROJECT_DIR}/accounts/.gitkeep" || true
+    fi
     
     # Remove .env file
     if [ -f "${ENV_FILE}" ]; then
@@ -272,16 +276,6 @@ create_buckets() {
     log_info "MinIO buckets created ✓"
 }
 
-# Initialize Authgear project
-init_authgear_project() {
-    log_info "Initializing Authgear project..."
-    
-    # Source environment variables
-    set -a
-    # shellcheck source=/dev/null
-    source "${ENV_FILE}"
-    set +a
-    
 # Initialize Authgear project
 init_authgear_project() {
     log_info "Initializing Authgear project..."

@@ -26,23 +26,24 @@ echo -e "${GREEN}Making user admin: $EMAIL${NC}"
 # 1. Find user by email via Admin API
 echo "Searching for user..."
 
-QUERY='query searchUsers($searchKeyword: String!) { users(searchKeyword: $searchKeyword, first: 10) { edges { node { id standardAttributes } } } }'
-VARS="{\"searchKeyword\":\"$EMAIL\"}"
+QUERY='query { users(first: 100) { edges { node { id standardAttributes } } } }'
 
 OUTPUT=$(docker compose -f docker-compose.production.yml exec -T authgear authgear internal admin-api invoke \
   --app-id accounts \
   --endpoint "http://127.0.0.1:3002" \
   --host "$HOST_DOMAIN" \
-  --query "$QUERY" \
-  --variables-json "$VARS")
+  --query "$QUERY")
 
 echo -e "${YELLOW}API Response: $OUTPUT${NC}"
 
-# 2. Extract Node ID
-NODE_ID=$(echo "$OUTPUT" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+# 2. Extract Node ID - find the user with matching email in standardAttributes
+# This is a simple grep that looks for email in the JSON output
+NODE_ID=$(echo "$OUTPUT" | grep -B5 "\"email\":\"$EMAIL\"" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -z "$NODE_ID" ]; then
     echo "Error: User not found with email: $EMAIL"
+    echo "Available users:"
+    echo "$OUTPUT" | grep -o '"email":"[^"]*"' | cut -d'"' -f4 | sort -u
     exit 1
 fi
 

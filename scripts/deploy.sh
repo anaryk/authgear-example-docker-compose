@@ -38,8 +38,8 @@ generate_secrets() {
         log_info "Running authgear init..."
         
         # Define domains if not set
-        AUTH_DOMAIN=${AUTH_DOMAIN:-auth.maxadmin.io}
-        PORTAL_DOMAIN=${PORTAL_DOMAIN:-portal.maxadmin.io}
+        AUTH_DOMAIN=${AUTH_DOMAIN:-auth.maximal-limit.cz}
+        PORTAL_DOMAIN=${PORTAL_DOMAIN:-portal.maximal-limit.cz}
         
         # Use docker run directly to avoid read-only volume mount issues from docker-compose
         docker run --rm \
@@ -154,7 +154,7 @@ log_info "Cloudflare Tunnel Configuration:"
 echo "   ┌─────────────────────────────────────────────────────────────┐"
 echo "   │ Domain                     → Service URL                    │"
 echo "   ├─────────────────────────────────────────────────────────────┤"
-echo "   │ ${AUTH_DOMAIN:-auth.maxadmin.io}   → http://localhost:3100          │"
-echo "   │ ${PORTAL_DOMAIN:-portal.maxadmin.io} → http://localhost:8010          │"
+echo "   │ ${AUTH_DOMAIN:-auth.maximal-limit.cz}   → http://localhost:3100          │"
+echo "   │ ${PORTAL_DOMAIN:-portal.maximal-limit.cz} → http://localhost:8010          │"
 echo "   └─────────────────────────────────────────────────────────────┘"
 echo

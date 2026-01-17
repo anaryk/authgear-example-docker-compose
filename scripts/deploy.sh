@@ -154,6 +154,10 @@ log_info "All database migrations completed successfully."
 
 log_info "Waiting for services to be healthy..."
 sleep 10
+
+log_info "Restarting nginx to refresh DNS cache..."
+docker compose -f docker-compose.production.yml restart nginx
+
 docker compose -f docker-compose.production.yml ps
 
 echo

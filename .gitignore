@@ -5,6 +5,11 @@
 *.secrets.yaml
 secrets/
 
+# Cloudflare Tunnel
+cloudflare/credentials.json
+cloudflare/*.pem
+cloudflare/*.cert
+
 # Backups
 backups/
 *.tar.gz

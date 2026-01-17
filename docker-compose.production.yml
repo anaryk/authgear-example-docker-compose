@@ -142,7 +142,7 @@ services:
         max-file: "3"
 
   authgear:
-    image: quay.io/theauthgear/authgear-server:2025-11-26.0
+    image: quay.io/theauthgear/authgear-server:2026-01-08.0
     container_name: authgear_server
     restart: unless-stopped
     command:
@@ -183,7 +183,7 @@ services:
         max-file: "5"
 
   authgear-images:
-    image: quay.io/theauthgear/authgear-server:2025-11-26.0
+    image: quay.io/theauthgear/authgear-server:2026-01-08.0
     container_name: authgear_images
     restart: unless-stopped
     command:
@@ -222,7 +222,7 @@ services:
         max-file: "5"
 
   authgear-portal:
-    image: quay.io/theauthgear/authgear-portal:2025-11-26.0
+    image: quay.io/theauthgear/authgear-portal:2026-01-08.0
     container_name: authgear_portal
     restart: unless-stopped
     command:

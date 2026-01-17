@@ -138,8 +138,19 @@ log_info "Starting services..."
 docker compose -f docker-compose.production.yml up -d --build
 
 log_info "Running database migrations..."
+log_info "  → Authgear main database migration..."
 docker compose -f docker-compose.production.yml run --rm authgear authgear database migrate up
+
+log_info "  → Authgear audit database migration..."
+docker compose -f docker-compose.production.yml run --rm authgear authgear audit database migrate up
+
+log_info "  → Authgear images database migration..."
+docker compose -f docker-compose.production.yml run --rm authgear authgear images database migrate up
+
+log_info "  → Authgear portal database migration..."
 docker compose -f docker-compose.production.yml run --rm authgear-portal authgear-portal database migrate up
+
+log_info "All database migrations completed successfully."
 
 log_info "Waiting for services to be healthy..."
 sleep 10
